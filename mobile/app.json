@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Cricket Live",
+    "slug": "cricket-live",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "android": {
+      "package": "com.personal.cricketlive",
+      "adaptiveIcon": {
+        "backgroundColor": "#050505"
+      }
+    }
+  }
+}

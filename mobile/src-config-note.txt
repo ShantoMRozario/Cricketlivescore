@@ -1,0 +1,1 @@
+Edit src/config.js and set API_BASE_URL to your deployed backend URL.
