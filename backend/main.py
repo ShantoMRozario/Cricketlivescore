@@ -30,9 +30,15 @@ HEADERS = {
 SCORE_API_URL = os.getenv("SCORE_API_URL", "").rstrip("/")
 
 def find_match_id(href: str) -> Optional[str]:
-    # Cricbuzz match links commonly contain /live-cricket-scores/<id>/
-    match = re.search(r"/(?:live-cricket-scores|cricket-scores|scorecard)/?(\\d+)", href or "")
-    return match.group(1) if match else None
+    if not href:
+        return None
+
+    match = re.search(r"-(\d+)(?:/|$)", href)
+
+    if match:
+        return match.group(1)
+
+    return None
 
 def normalize_text(value: str) -> str:
     return re.sub(r"\\s+", " ", value or "").strip()
