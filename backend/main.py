@@ -33,12 +33,12 @@ def find_match_id(href: str) -> Optional[str]:
     if not href:
         return None
 
-    match = re.search(r"-(\d+)(?:/|$)", href)
+    match = re.search(
+        r"/live-cricket-scores/(\d+)",
+        href
+    )
 
-    if match:
-        return match.group(1)
-
-    return None
+    return match.group(1) if match else None
 
 def normalize_text(value: str) -> str:
     return re.sub(r"\\s+", " ", value or "").strip()
