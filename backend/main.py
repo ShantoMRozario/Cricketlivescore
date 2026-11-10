@@ -27,7 +27,7 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
     "Referer": f"{CRICBUZZ}/",
 }
-SCORE_API_URL = os.getenv("SCORE_API_URL", "").rstrip("/")
+SCORE_API_URL=https://original-cricket-score.onrender.com
 
 def find_match_id(href: str) -> Optional[str]:
     if not href:
