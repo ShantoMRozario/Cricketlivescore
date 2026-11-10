@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 from typing import Optional
@@ -99,17 +100,82 @@ async def root():
 async def health():
     return {"status": "ok"}
 
+async def attach_score(match, client, semaphore):
+    if not SCORE_API_URL or not match.get("id"):
+        return match
+
+    async with semaphore:
+        try:
+            response = await client.get(
+                f"{SCORE_API_URL}/",
+                params={"score": match["id"]}
+            )
+
+            response.raise_for_status()
+            data = response.json()
+
+            print(f"Score API response for {match['id']}: {data}")
+
+            if data.get("status") == "success":
+                match["score"] = data.get("score", "")
+                match["title"] = data.get("title") or match["title"]
+
+                batsmen = data.get("current_batsmen", [])
+                if batsmen:
+                    match["score2"] = " | ".join(
+                        f"{b['name']} {b['score']}" for b in batsmen
+                    )
+
+        except Exception as error:
+            print(f"Score error for {match.get('id')}: {error}")
+
+    return match
+
 @app.get("/matches")
-async def matches(category: str = Query("live", pattern="^(live|upcoming|recent)$")):
+async def matches(
+    category: str = Query(
+        "live",
+        pattern="^(live|upcoming|recent)$"
+    )
+):
     url = PAGES[category]
+
     try:
         html = await fetch_page(url)
         found = parse_matches(html, category)
-        return {"category": category, "matches": found, "count": len(found)}
+
+        if SCORE_API_URL and found:
+            semaphore = asyncio.Semaphore(3)
+
+            async with httpx.AsyncClient(
+                timeout=30,
+                follow_redirects=True
+            ) as client:
+
+                found = await asyncio.gather(
+                    *[
+                        attach_score(match, client, semaphore)
+                        for match in found
+                    ]
+                )
+
+        return {
+            "category": category,
+            "matches": found,
+            "count": len(found)
+        }
+
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail=f"Could not retrieve match list: {exc}")
+        raise HTTPException(
+            status_code=502,
+            detail=f"Could not retrieve match list: {exc}"
+        )
+
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Could not parse match list: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not parse match list: {exc}"
+        )
 
 @app.get("/score/{match_id}")
 async def score(match_id: str):
